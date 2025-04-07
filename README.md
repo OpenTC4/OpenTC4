@@ -1,8 +1,6 @@
 # OpenTC4
 
-**OpenTC4** is a clean-room reimplementation of Thaumcraft 4, featuring fully original code and assets. Built on the same version of Minecraft from 2014, we attempt to make a full working alternative for modpacks.
-
-> 🔮 *A clean-room reimplementation of Thaumcraft 4 with modern code, original assets, and full 1.7.10 compatibility.*
+**OpenTC4** is a faithful clean-room reimplementation of Thaumcraft 4, featuring fully original code and assets. Built on the same version of Minecraft from 2014, we attempt to make a full working alternative for modpacks.
 
 ---
 
