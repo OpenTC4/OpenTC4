@@ -3,7 +3,7 @@
     "modid": "opentc4",
     "name": "OpenTC4",
     "description": "Unofficial but faithful clean-room reimplementation of Thaumcraft 4.",
-    "version": "DEV",
+    "version": "0.1.0-alpha",
     "mcversion": "1.7.10",
     "url": "https://github.com/OpenTC4/OpenTC4",
     "updateUrl": "",

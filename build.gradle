@@ -15,7 +15,7 @@ buildscript {
 apply plugin: 'forge'
 apply plugin: 'gtnh'
 
-version = 'DEV'
+version = '0.1.0-alpha'
 group = 'com.opentc4'
 archivesBaseName = 'OpenTC4'
 
