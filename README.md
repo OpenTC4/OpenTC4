@@ -15,7 +15,7 @@
 
 Non-functional development period. Builds are configured for development environments only.
 
-We are looking for contributors!
+We are looking for contributors! [Pull requests](https://github.com/opentc4/opentc4/pulls) are welcome.
 
 ---
 
