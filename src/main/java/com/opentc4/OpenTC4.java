@@ -1,4 +1,4 @@
-package com.opentc4.core;
+package com.opentc4;
 
 import com.opentc4.api.OTC4API;
 import com.opentc4.research.ResearchManager;
