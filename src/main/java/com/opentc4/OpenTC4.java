@@ -33,7 +33,6 @@ public class OpenTC4 {
         ModItems.init();
         ModItems.registerItems();
         ModItems.registerDictionary();
-        Recipes.init();
     }
 
     @Mod.EventHandler
@@ -44,6 +43,7 @@ public class OpenTC4 {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         // Cross-mod compatibility, recipes, final hooks
+        Recipes.init();
     }
 
     public static CreativeTabs tabOpenTC4 = new CreativeTabs("tabOpenTC4") {
