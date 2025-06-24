@@ -1,12 +1,13 @@
 package com.opentc4;
-//every single item
+
+import net.minecraft.item.Item;
+import net.minecraftforge.oredict.OreDictionary;
+
 import com.opentc4.common.items.ItemThaumonomicon;
 import com.opentc4.common.items.NuggetIron;
 import com.opentc4.common.items.WandCapIron;
-// the actual imports
+
 import cpw.mods.fml.common.registry.GameRegistry;
-import net.minecraft.item.Item;
-import net.minecraftforge.oredict.OreDictionary;
 
 public class ModItems {
 
