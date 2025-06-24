@@ -1,4 +1,4 @@
-package com.opentc4.items;
+package com.opentc4.common.items;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.item.EnumRarity;
@@ -20,7 +20,7 @@ public class ItemThaumonomicon extends Item {
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister iconRegister) {
-        this.itemIcon = iconRegister.registerIcon("opentc4:itemthaumonomicon");
+        this.itemIcon = iconRegister.registerIcon("opentc4:thaumonomicon");
     }
 
     public EnumRarity getRarity(ItemStack stack) {

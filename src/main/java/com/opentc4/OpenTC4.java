@@ -5,7 +5,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 import com.opentc4.api.OTC4API;
-import com.opentc4.research.ResearchManager;
+import com.opentc4.common.research.ResearchManager;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -30,6 +30,7 @@ public class OpenTC4 {
         OTC4API.researchHandler = new ResearchManager();
         ModItems.init();
         ModItems.registerItems();
+        ModItems.registerDictionary();
     }
 
     @Mod.EventHandler

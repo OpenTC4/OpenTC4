@@ -1,2 +1,8 @@
+# blocks
+# tools
+# items
 item.itemThaumonomicon.name=Thaumonomicon
+item.nuggetIron.name=Iron Nugget
+item.wandCapIron.name=Iron Cap
+# misc
 itemGroup.tabOpenTC4=OpenTC4

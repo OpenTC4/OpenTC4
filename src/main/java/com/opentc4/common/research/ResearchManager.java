@@ -1,4 +1,4 @@
-package com.opentc4.research;
+package com.opentc4.common.research;
 
 import com.opentc4.api.research.IResearchHandler;
 
