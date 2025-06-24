@@ -1,5 +1,9 @@
 package com.opentc4;
 
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+
 import com.opentc4.api.OTC4API;
 import com.opentc4.research.ResearchManager;
 
@@ -24,6 +28,8 @@ public class OpenTC4 {
     public void preInit(FMLPreInitializationEvent event) {
         // Setup config, API bridges, and early registries
         OTC4API.researchHandler = new ResearchManager();
+        ModItems.init();
+        ModItems.registerItems();
     }
 
     @Mod.EventHandler
@@ -35,4 +41,12 @@ public class OpenTC4 {
     public void postInit(FMLPostInitializationEvent event) {
         // Cross-mod compatibility, recipes, final hooks
     }
+
+    public static CreativeTabs tabOpenTC4 = new CreativeTabs("tabOpenTC4") {
+
+        @Override
+        public Item getTabIconItem() {
+            return new ItemStack(ModItems.itemThaumonomicon).getItem();
+        }
+    };
 }

@@ -9,7 +9,7 @@
     "updateUrl": "",
     "authorList": ["OpenTC4 Contributors"],
     "credits": "Inspired by Azanor's Thaumcraft 4",
-    "logoFile": "assets/opentc4/textures/logo.png",
+    "logoFile": "assets/opentc4/logo.png",
     "screenshots": [],
     "dependencies": ["Baubles"]
   }
