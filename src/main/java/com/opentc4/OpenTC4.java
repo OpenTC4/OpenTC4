@@ -28,9 +28,12 @@ public class OpenTC4 {
     public void preInit(FMLPreInitializationEvent event) {
         // Setup config, API bridges, and early registries
         OTC4API.researchHandler = new ResearchManager();
+        ModBlocks.init();
+        ModBlocks.registerBlocksInPre();
         ModItems.init();
         ModItems.registerItems();
         ModItems.registerDictionary();
+        Recipes.init();
     }
 
     @Mod.EventHandler
