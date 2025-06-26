@@ -19,6 +19,9 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
 
+    - name: Set release version
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
 
@@ -33,4 +36,5 @@ jobs:
       with:
         prerelease: true
         generate_release_notes: true
+        tag_name: "${{ env.RELEASE_VERSION }}"
         files: build/libs/opentc4*.jar
