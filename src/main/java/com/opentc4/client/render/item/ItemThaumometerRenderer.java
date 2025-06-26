@@ -1,5 +1,7 @@
 package com.opentc4.client.render.item;
 
+import java.lang.reflect.Field;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.ItemRenderer;
@@ -18,8 +20,6 @@ import net.minecraftforge.client.model.IModelCustom;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
-
-import java.lang.reflect.Field;
 
 public class ItemThaumometerRenderer implements IItemRenderer {
 
@@ -73,10 +73,32 @@ public class ItemThaumometerRenderer implements IItemRenderer {
         return smoothEquipProgress;
     }
 
-    private void renderQuadCenteredFromTexture(Minecraft mc, ResourceLocation texture, float scale, float r, float g, float b, int alpha, int blendMode) {
+    private static Field equippedField = null;
+    private static Field prevEquippedField = null;
+    private static boolean reflectionInitialized = false;
+    private static boolean reflectionFailed = false;
+
+    private void tryInitializeReflection() {
+        if (reflectionInitialized || reflectionFailed) return;
+
+        try {
+            equippedField = ItemRenderer.class.getDeclaredField("equippedProgress");
+            prevEquippedField = ItemRenderer.class.getDeclaredField("prevEquippedProgress");
+            equippedField.setAccessible(true);
+            prevEquippedField.setAccessible(true);
+            reflectionInitialized = true;
+        } catch (Exception e) {
+            reflectionFailed = true;
+            System.err.println("[OpenTC4] Thaumometer smoothing disabled. Here be dragons!");
+        }
+    }
+
+    private void renderQuadCenteredFromTexture(Minecraft mc, ResourceLocation texture, float scale, float r, float g,
+        float b, int alpha, int blendMode) {
         GL11.glPushMatrix();
         GL11.glScalef(scale, scale, scale);
-        mc.getTextureManager().bindTexture(texture);
+        mc.getTextureManager()
+            .bindTexture(texture);
 
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, blendMode);
@@ -115,26 +137,30 @@ public class ItemThaumometerRenderer implements IItemRenderer {
 
         float scaleBase = 0.8F;
         EntityPlayerSP playerSP = (EntityPlayerSP) player;
+
+        tryInitializeReflection();
+
         float equippedProgress = 1.0F;
         float prevEquippedProgress = 1.0F;
 
-        try {
-            Field equippedField = ItemRenderer.class.getDeclaredField("equippedProgress");
-            Field prevEquippedField = ItemRenderer.class.getDeclaredField("prevEquippedProgress");
-            equippedField.setAccessible(true);
-            prevEquippedField.setAccessible(true);
-
-            equippedProgress = equippedField.getFloat(mc.entityRenderer.itemRenderer);
-            prevEquippedProgress = prevEquippedField.getFloat(mc.entityRenderer.itemRenderer);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (reflectionInitialized) {
+            try {
+                equippedProgress = equippedField.getFloat(mc.entityRenderer.itemRenderer);
+                prevEquippedProgress = prevEquippedField.getFloat(mc.entityRenderer.itemRenderer);
+            } catch (Exception e) {
+                reflectionFailed = true;
+                System.err.println("[OpenTC4] Reflection failed mid-render. Here be dragons!");
+            }
         }
 
-        float equipProgressInterpolated = prevEquippedProgress + (equippedProgress - prevEquippedProgress) * partialTicks;
+        float equipProgressInterpolated = prevEquippedProgress
+            + (equippedProgress - prevEquippedProgress) * partialTicks;
         updateEquipProgress(equipProgressInterpolated);
         float smoothProgress = getSmoothEquipProgress();
-        float pitchInterpolated = playerSP.prevRenderArmPitch + (playerSP.renderArmPitch - playerSP.prevRenderArmPitch) * partialTicks;
-        float yawInterpolated = playerSP.prevRenderArmYaw + (playerSP.renderArmYaw - playerSP.prevRenderArmYaw) * partialTicks;
+        float pitchInterpolated = playerSP.prevRenderArmPitch
+            + (playerSP.renderArmPitch - playerSP.prevRenderArmPitch) * partialTicks;
+        float yawInterpolated = playerSP.prevRenderArmYaw
+            + (playerSP.renderArmYaw - playerSP.prevRenderArmYaw) * partialTicks;
         updateSmoothRotation(pitchInterpolated, yawInterpolated);
         float smoothPitch = getSmoothPitch();
         float smoothYaw = getSmoothYaw();
@@ -142,14 +168,17 @@ public class ItemThaumometerRenderer implements IItemRenderer {
         GL11.glPushMatrix();
         mc.renderEngine.bindTexture(TEXTURE_LOCATION);
 
-        if (type == ItemRenderType.EQUIPPED_FIRST_PERSON && playerEntityId == renderedViewEntityId && mc.gameSettings.thirdPersonView == 0) {
+        if (type == ItemRenderType.EQUIPPED_FIRST_PERSON && playerEntityId == renderedViewEntityId
+            && mc.gameSettings.thirdPersonView == 0) {
             GL11.glTranslatef(1F, 0.75F, -1F);
             GL11.glRotatef(135.0F, 0.0F, -1.0F, 0.0F);
 
-
             GL11.glRotatef((player.rotationPitch - smoothPitch) * 0.1F, 1.0F, 0.0F, 0.0F);
             GL11.glRotatef((player.rotationYaw - smoothYaw) * 0.1F, 0.0F, 1.0F, 0.0F);
-            GL11.glTranslatef(-0.7F * scaleBase, -(-0.65F * scaleBase) + (1.0F - smoothProgress) * 1.5F, 0.9F * scaleBase);
+            GL11.glTranslatef(
+                -0.7F * scaleBase,
+                -(-0.65F * scaleBase) + (1.0F - smoothProgress) * 1.5F,
+                0.9F * scaleBase);
             GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
             GL11.glTranslatef(0.0F, 0.0F, -0.9F * scaleBase);
             GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
@@ -200,23 +229,25 @@ public class ItemThaumometerRenderer implements IItemRenderer {
             }
         }
 
-        mc.getTextureManager().bindTexture(new ResourceLocation("opentc4:textures/models/item/thaumometer.png"));
+        mc.getTextureManager()
+            .bindTexture(new ResourceLocation("opentc4:textures/models/item/thaumometer.png"));
         this.model.renderAll();
 
         // Render the screen quad
         GL11.glPushMatrix();
         GL11.glTranslatef(0.0F, 0.11F, 0.0F);
         GL11.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-        //GL11.glRotatef(90.0F, 0.0F, 0.0F, 1.0F);
+        // GL11.glRotatef(90.0F, 0.0F, 0.0F, 1.0F);
 
         renderQuadCenteredFromTexture(
             mc,
             new ResourceLocation("opentc4:textures/models/item/scanscreen.png"),
             2.8F,
-            1.0F, 1.0F, 1.0F,
+            1.0F,
+            1.0F,
+            1.0F,
             190 + (int) (MathHelper.sin(player.ticksExisted + mc.theWorld.rand.nextFloat() * 2) * 10.0F + 10.0F),
-            GL11.GL_ONE_MINUS_SRC_ALPHA
-        );
+            GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         GL11.glPopMatrix();
         GL11.glPopMatrix();
