@@ -36,7 +36,7 @@ jobs:
       uses: "marvinpinto/action-automatic-releases@latest"
       with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ env.RELEASE_VERSION }}"
+          automatic_release_tag: "${{ env.SHORT_SHA }}"
           prerelease: true
           title: "${{ env.SHORT_SHA }}"
           files: build/libs/*.jar
