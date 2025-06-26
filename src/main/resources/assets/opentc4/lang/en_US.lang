@@ -4,5 +4,6 @@
 item.itemThaumonomicon.name=Thaumonomicon
 item.nuggetIron.name=Iron Nugget
 item.wandCapIron.name=Iron Cap
+item.itemThaumometer.name=Thaumometer
 # misc
 itemGroup.tabOpenTC4=OpenTC4
