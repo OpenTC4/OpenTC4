@@ -1,6 +1,10 @@
 package com.opentc4.api.aspects;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import net.minecraft.util.ResourceLocation;
@@ -122,7 +126,7 @@ public final class Aspect {
     }
 
     public String getLocalizedDescription() {
-        return StatCollector.translateToLocal("tc.aspect." + tag);
+        return StatCollector.translateToLocal("opentc4.aspect." + tag);
     }
 
     public Optional<String> getChatColor() {
