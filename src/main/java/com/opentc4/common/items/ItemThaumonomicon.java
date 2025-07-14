@@ -14,6 +14,7 @@ public class ItemThaumonomicon extends Item {
 
     public ItemThaumonomicon() {
         setMaxStackSize(1);
+        setMaxDamage(0);
         setCreativeTab(OpenTC4.tabOpenTC4);
     }
 
