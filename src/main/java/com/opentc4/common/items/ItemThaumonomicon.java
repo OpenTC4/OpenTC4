@@ -30,7 +30,7 @@ public class ItemThaumonomicon extends Item implements IGuiHolder<GuiData> {
     public ModularPanel buildUI(GuiData guiData, PanelSyncManager guiSyncManager, UISettings settings) {
         settings.getNEISettings()
             .disableNEI();
-        return new ModularPanel("opentc4:itemguitest").child(
+        return new ModularPanel("opentc4:thaumonomicon").child(
             IKey.str("Hello")
                 .asWidget()
                 .center());
