@@ -27,15 +27,6 @@ public class ItemThaumonomicon extends Item implements IGuiHolder<GuiData> {
         setCreativeTab(OpenTC4.tabOpenTC4);
     }
 
-    public ModularPanel buildUI(GuiData guiData, PanelSyncManager guiSyncManager, UISettings settings) {
-        settings.getNEISettings()
-            .disableNEI();
-        return new ModularPanel("opentc4:thaumonomicon").child(
-            IKey.str("Hello")
-                .asWidget()
-                .center());
-    }
-
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister iconRegister) {
@@ -44,6 +35,20 @@ public class ItemThaumonomicon extends Item implements IGuiHolder<GuiData> {
 
     public EnumRarity getRarity(ItemStack stack) {
         return EnumRarity.uncommon;
+    }
+
+    // OpenGL GUI (legacy)
+
+    // eventually, when i figure it out.
+
+    // ModularUI2 GUI (modern, req modularui mod)
+    public ModularPanel buildUI(GuiData guiData, PanelSyncManager guiSyncManager, UISettings settings) {
+        settings.getNEISettings()
+            .disableNEI();
+        return new ModularPanel("opentc4:thaumonomicon").child(
+            IKey.str("Hello")
+                .asWidget()
+                .center());
     }
 
     @Override
