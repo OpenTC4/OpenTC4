@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.entity.Render;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.entity.RenderPlayer;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.MathHelper;
@@ -32,85 +31,66 @@ public class ItemThaumometerRenderer implements IItemRenderer {
 
     private final IModelCustom model;
 
+    private float smoothEquip = 1.0F;
+    private float pitch = 0f;
+    private float yaw = 0f;
+
+    private static Field equippedField;
+    private static Field prevEquippedField;
+
     public ItemThaumometerRenderer() {
         model = AdvancedModelLoader.loadModel(MODEL_LOCATION);
     }
 
     @Override
     public boolean handleRenderType(ItemStack item, ItemRenderType type) {
-        return true; // Render in all contexts
+        return true;
     }
 
     @Override
     public boolean shouldUseRenderHelper(ItemRenderType type, ItemStack item, ItemRendererHelper helper) {
-        return true; // Allow helpers for smooth rendering
+        return true;
     }
 
-    private float smoothEquipProgress = 1.0F;
-    private float smoothPitch = 0f;
-    private float smoothYaw = 0f;
-
-    private void updateSmoothRotation(float targetPitch, float targetYaw) {
-        float smoothing = 0.1f; // adjust for speed
-
-        smoothPitch += (targetPitch - smoothPitch) * smoothing;
-        smoothYaw += (targetYaw - smoothYaw) * smoothing;
+    private void smoothRotation(float targetPitch, float targetYaw) {
+        pitch += (targetPitch - pitch) * 0.1f;
+        yaw += (targetYaw - yaw) * 0.1f;
     }
 
-    private float getSmoothPitch() {
-        return smoothPitch;
+    private void smoothEquipProgress(float targetProgress) {
+        smoothEquip += (targetProgress - smoothEquip) * 0.1f;
     }
 
-    private float getSmoothYaw() {
-        return smoothYaw;
-    }
-
-    private void updateEquipProgress(float targetProgress) {
-        smoothEquipProgress += (targetProgress - smoothEquipProgress) * 0.1F; // adjust smoothing speed here
-    }
-
-    private float getSmoothEquipProgress() {
-        return smoothEquipProgress;
-    }
-
-    private static Field equippedField = null;
-    private static Field prevEquippedField = null;
-    private static boolean reflectionInitialized = false;
-    private static boolean reflectionFailed = false;
-
-    private void tryInitializeReflection() {
-        if (reflectionInitialized || reflectionFailed) return;
+    private void initReflection() {
+        if (equippedField != null && prevEquippedField != null) return;
 
         try {
             equippedField = ItemRenderer.class.getDeclaredField("equippedProgress");
             prevEquippedField = ItemRenderer.class.getDeclaredField("prevEquippedProgress");
             equippedField.setAccessible(true);
             prevEquippedField.setAccessible(true);
-            reflectionInitialized = true;
-        } catch (Exception e) {
-            reflectionFailed = true;
-            System.err.println("[OpenTC4] Thaumometer smoothing disabled. Here be dragons!");
+        } catch (Exception ignored) {
+            System.err.println("[OpenTC4] Something failed, Thaumometer animation may be choppy.");
         }
     }
 
-    private void renderQuadCenteredFromTexture(Minecraft mc, ResourceLocation texture, float scale, float r, float g,
-        float b, int alpha, int blendMode) {
+    private void drawOverlay(Minecraft mc, ResourceLocation texture, float alpha) {
         GL11.glPushMatrix();
-        GL11.glScalef(scale, scale, scale);
+        GL11.glScalef(2.8F, 2.8F, 2.8F);
         mc.getTextureManager()
             .bindTexture(texture);
 
         GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, blendMode);
-        GL11.glColor4f(r, g, b, alpha / 255.0F);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha);
 
-        Tessellator tessellator = Tessellator.instance;
-        tessellator.startDrawingQuads();
-        tessellator.addVertexWithUV(-0.5, 0, -0.5, 0, 0);
-        tessellator.addVertexWithUV(0.5, 0, -0.5, 1, 0);
-        tessellator.addVertexWithUV(0.5, 0, 0.5, 1, 1);
-        tessellator.addVertexWithUV(-0.5, 0, 0.5, 0, 1);
-        tessellator.draw();
+        Tessellator t = Tessellator.instance;
+        t.startDrawingQuads();
+        t.addVertexWithUV(-0.5, 0, -0.5, 0, 0);
+        t.addVertexWithUV(0.5, 0, -0.5, 1, 0);
+        t.addVertexWithUV(0.5, 0, 0.5, 1, 1);
+        t.addVertexWithUV(-0.5, 0, 0.5, 0, 1);
+        t.draw();
 
         GL11.glDisable(GL11.GL_BLEND);
         GL11.glColor4f(1, 1, 1, 1);
@@ -120,67 +100,44 @@ public class ItemThaumometerRenderer implements IItemRenderer {
     @Override
     public void renderItem(ItemRenderType type, ItemStack item, Object... data) {
         Minecraft mc = Minecraft.getMinecraft();
-        int renderedViewEntityId = 0;
-        int playerEntityId = 0;
-
-        if (type == ItemRenderType.EQUIPPED) {
-            renderedViewEntityId = mc.renderViewEntity.getEntityId();
-            playerEntityId = ((EntityLivingBase) data[1]).getEntityId();
-        }
-
         EntityPlayer player = mc.thePlayer;
-
-        float partialTicks = 0F;
-        if (data.length > 1 && data[1] instanceof Float) {
-            partialTicks = (Float) data[1];
-        }
-
-        float scaleBase = 0.8F;
         EntityPlayerSP playerSP = (EntityPlayerSP) player;
 
-        tryInitializeReflection();
+        float partialTicks = data.length > 1 && data[1] instanceof Float ? (Float) data[1] : 0F;
 
-        float equippedProgress = 1.0F;
-        float prevEquippedProgress = 1.0F;
+        initReflection();
 
-        if (reflectionInitialized) {
-            try {
-                equippedProgress = equippedField.getFloat(mc.entityRenderer.itemRenderer);
-                prevEquippedProgress = prevEquippedField.getFloat(mc.entityRenderer.itemRenderer);
-            } catch (Exception e) {
-                reflectionFailed = true;
-                System.err.println("[OpenTC4] Reflection failed mid-render. Here be dragons!");
+        float equipped = 1.0F;
+        float prevEquipped = 1.0F;
+        try {
+            if (equippedField != null && prevEquippedField != null) {
+                equipped = equippedField.getFloat(mc.entityRenderer.itemRenderer);
+                prevEquipped = prevEquippedField.getFloat(mc.entityRenderer.itemRenderer);
             }
-        }
+        } catch (Exception ignored) {}
 
-        float equipProgressInterpolated = prevEquippedProgress
-            + (equippedProgress - prevEquippedProgress) * partialTicks;
-        updateEquipProgress(equipProgressInterpolated);
-        float smoothProgress = getSmoothEquipProgress();
-        float pitchInterpolated = playerSP.prevRenderArmPitch
+        float equipProgress = prevEquipped + (equipped - prevEquipped) * partialTicks;
+        smoothEquipProgress(equipProgress);
+
+        float pitchInterp = playerSP.prevRenderArmPitch
             + (playerSP.renderArmPitch - playerSP.prevRenderArmPitch) * partialTicks;
-        float yawInterpolated = playerSP.prevRenderArmYaw
+        float yawInterp = playerSP.prevRenderArmYaw
             + (playerSP.renderArmYaw - playerSP.prevRenderArmYaw) * partialTicks;
-        updateSmoothRotation(pitchInterpolated, yawInterpolated);
-        float smoothPitch = getSmoothPitch();
-        float smoothYaw = getSmoothYaw();
+        smoothRotation(pitchInterp, yawInterp);
 
         GL11.glPushMatrix();
         mc.renderEngine.bindTexture(TEXTURE_LOCATION);
 
-        if (type == ItemRenderType.EQUIPPED_FIRST_PERSON && playerEntityId == renderedViewEntityId
+        if (type == ItemRenderType.EQUIPPED_FIRST_PERSON
+            && mc.thePlayer.getEntityId() == mc.renderViewEntity.getEntityId()
             && mc.gameSettings.thirdPersonView == 0) {
             GL11.glTranslatef(1F, 0.75F, -1F);
             GL11.glRotatef(135.0F, 0.0F, -1.0F, 0.0F);
-
-            GL11.glRotatef((player.rotationPitch - smoothPitch) * 0.1F, 1.0F, 0.0F, 0.0F);
-            GL11.glRotatef((player.rotationYaw - smoothYaw) * 0.1F, 0.0F, 1.0F, 0.0F);
-            GL11.glTranslatef(
-                -0.7F * scaleBase,
-                -(-0.65F * scaleBase) + (1.0F - smoothProgress) * 1.5F,
-                0.9F * scaleBase);
+            GL11.glRotatef((player.rotationPitch - pitch) * 0.1F, 1.0F, 0.0F, 0.0F);
+            GL11.glRotatef((player.rotationYaw - yaw) * 0.1F, 0.0F, 1.0F, 0.0F);
+            GL11.glTranslatef(-0.56F, 0.55F + (1.0F - smoothEquip) * 1.5F, 0.72F);
             GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
-            GL11.glTranslatef(0.0F, 0.0F, -0.9F * scaleBase);
+            GL11.glTranslatef(0.0F, 0.0F, -0.72F);
             GL11.glRotatef(90.0F, 0.0F, 1.0F, 0.0F);
 
             GL11.glEnable(GL12.GL_RESCALE_NORMAL);
@@ -190,19 +147,17 @@ public class ItemThaumometerRenderer implements IItemRenderer {
             mc.renderEngine.bindTexture(mc.thePlayer.getLocationSkin());
 
             for (int i = 0; i < 2; i++) {
-                int sideMultiplier = i * 2 - 1;
+                int mult = i * 2 - 1;
                 GL11.glPushMatrix();
-                GL11.glTranslatef(0.0F, -0.6F, 1.1F * sideMultiplier);
-                GL11.glRotatef(-45 * sideMultiplier, 1.0F, 0.0F, 0.0F);
+                GL11.glTranslatef(0.0F, -0.6F, 1.1F * mult);
+                GL11.glRotatef(-45 * mult, 1.0F, 0.0F, 0.0F);
                 GL11.glRotatef(-90.0F, 0.0F, 0.0F, 1.0F);
                 GL11.glRotatef(59.0F, 0.0F, 0.0F, 1.0F);
-                GL11.glRotatef(-65 * sideMultiplier, 0.0F, 1.0F, 0.0F);
-
+                GL11.glRotatef(-65 * mult, 0.0F, 1.0F, 0.0F);
                 Render render = RenderManager.instance.getEntityRenderObject(player);
                 if (render instanceof RenderPlayer) {
                     ((RenderPlayer) render).renderFirstPersonArm(player);
                 }
-
                 GL11.glPopMatrix();
             }
 
@@ -210,11 +165,8 @@ public class ItemThaumometerRenderer implements IItemRenderer {
 
             GL11.glRotatef(90.0F, 0.0F, 0.0F, 1.0F);
             GL11.glTranslatef(0.4F, -0.4F, 0.0F);
-            GL11.glEnable(GL12.GL_RESCALE_NORMAL);
             GL11.glScalef(2.0F, 2.0F, 2.0F);
-
         } else {
-            // Third person or inventory render
             GL11.glScalef(0.5F, 0.5F, 0.5F);
             if (type == ItemRenderType.EQUIPPED) {
                 GL11.glTranslatef(1.6F, 0.3F, 2.0F);
@@ -230,24 +182,18 @@ public class ItemThaumometerRenderer implements IItemRenderer {
         }
 
         mc.getTextureManager()
-            .bindTexture(new ResourceLocation("opentc4:textures/models/item/thaumometer.png"));
-        this.model.renderAll();
+            .bindTexture(TEXTURE_LOCATION);
+        model.renderAll();
 
-        // Render the screen quad
         GL11.glPushMatrix();
         GL11.glTranslatef(0.0F, 0.11F, 0.0F);
         GL11.glRotatef(180.0F, 1.0F, 0.0F, 0.0F);
-        // GL11.glRotatef(90.0F, 0.0F, 0.0F, 1.0F);
 
-        renderQuadCenteredFromTexture(
+        drawOverlay(
             mc,
             new ResourceLocation("opentc4:textures/models/item/scanscreen.png"),
-            2.8F,
-            1.0F,
-            1.0F,
-            1.0F,
-            190 + (int) (MathHelper.sin(player.ticksExisted + mc.theWorld.rand.nextFloat() * 2) * 10.0F + 10.0F),
-            GL11.GL_ONE_MINUS_SRC_ALPHA);
+            190 + (int) (MathHelper.sin(player.ticksExisted + mc.theWorld.rand.nextFloat() * 2) * 10.0F + 10.0F)
+                / 255F);
 
         GL11.glPopMatrix();
         GL11.glPopMatrix();
